@@ -1,0 +1,8 @@
+.next/
+.vscode/
+node_modules/
+package-lock.json
+.idea
+.env
+*/**/.DS_Store
+.DS_Store
