@@ -14,7 +14,6 @@ class Home extends Component {
             const w3c = await w3connect(web3Connect);
             const [account] = await w3c.web3.eth.getAccounts();
             const user = createWeb3User(account);
-            console.log('w3c', w3c);
             this.props.updateDataUser({ address: user.username });
         } catch (err) {
             console.log('web3Connect error', err);
@@ -22,6 +21,11 @@ class Home extends Component {
     }
 
     handleDisconnect = async () => {
+        const { web3Connect } = this.props.contractReducer;
+        if (web3Connect && web3Connect.currentProvider && web3Connect.currentProvider.close) {
+            await web3Connect.currentProvider.close();
+        }
+        await web3Connect.clearCachedProvider();
         this.props.updateDataUser({ address: null });
     }
 
