@@ -1,7 +1,7 @@
 
+import WalletConnectProvider from '@walletconnect/web3-provider';
 import Web3 from 'web3';
 import Web3Connect from 'web3connect';
-import WalletConnectProvider from '@walletconnect/web3-provider';
 import configs from '../configs';
 
 const getChainIdName = (chainId) => {

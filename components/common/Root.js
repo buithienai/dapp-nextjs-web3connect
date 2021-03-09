@@ -1,11 +1,11 @@
 import React, { useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 import { ToastContainer } from "react-toastify";
 import Web3Connect from 'web3connect';
 import configs from '../../configs';
 import * as appAction from '../../redux/actions/appActions';
-import { providerOptions, createWeb3User, w3connect } from '../../utils/web3Connect';
+import { createWeb3User, providerOptions, w3connect } from '../../utils/web3Connect';
 import './styles/ReactToastify.scss';
-import { useDispatch } from 'react-redux'
 
 const Root = () => {
 	const dispatch = useDispatch();
@@ -21,22 +21,74 @@ const Root = () => {
 			initCurrentUser(w3c);
 		}
 
-		dispatch(appAction.updateDataContract({ web3Connect: w3c }))
+		dispatch(appAction.updateDataContract({ web3Connect: w3c }));
 	}, []);
 
-	const initCurrentUser = async (web3Connect) => {
-		let user;
+	const subscribeProvider = async (w3c) => {
 		try {
-			const w3c = await w3connect(
-				web3Connect,
-			);
-			const [account] = await w3c.web3.eth.getAccounts();
-			user = createWeb3User(account);
-			dispatch(appAction.updateDataUser({ address: user.username }))
+			const provider = await w3c.connect();
+
+			if (!provider.on) {
+				return;
+			}
+
+			dispatch(appAction.updateDataContract({ provider }));
+
+			provider.on("close", () => resetApp(w3c));
+
+			provider.on("accountsChanged", async (accounts) => {
+				dispatch(appAction.updateDataUser({ address: accounts[0] }));
+			});
+
+			provider.on("chainChanged", async (chainId) => {
+				if (Number(chainId) !== configs.chainId) {
+					alert(
+						`Please switch Web3 to the correct network and try signing in again. Detected network: ${configs.network
+						}, Required network: ${configs.network}`
+					);
+					resetApp(w3c);
+				} else {
+					initCurrentUser(w3c);
+				}
+			});
+
+			provider.on("connect", () => {
+				console.log("connect");
+			});
+
+			provider.on("disconnect", (code, reason) => {
+				console.log("disconnect");
+				resetApp(w3c);
+			});
+		} catch (error) {
+
+		}
+	}
+
+	const resetApp = async (w3c) => {
+		if (w3c && w3c.currentProvider && w3c.currentProvider.close) {
+			await w3c.currentProvider.close();
+		}
+		await w3c.clearCachedProvider();
+		dispatch(appAction.updateDataUser({ address: null }));
+	}
+
+	const initCurrentUser = async (web3Connect) => {
+		try {
+			const w3c = await w3connect(web3Connect);
+			const chainId = await w3c.web3.eth.net.getId();
+
+			if (chainId === configs.chainId) {
+				const [account] = await w3c.web3.eth.getAccounts();
+
+				const user = createWeb3User(account);
+				dispatch(appAction.updateDataUser({ address: user.username }));
+				subscribeProvider(web3Connect);
+			}
 		} catch (e) {
 			console.error(`Could not log in with web3`);
 		}
-	};
+	}
 
 	return (
 		<>

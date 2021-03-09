@@ -1,20 +1,27 @@
-import Link from 'next/link';
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import Layout from '../common/home/Layout';
-import { customNumber } from '../../utils/common';
 import configs from '../../configs';
-import { w3connect, createWeb3User } from '../../utils/web3Connect';
 import * as appAction from '../../redux/actions/appActions';
+import { createWeb3User, w3connect } from '../../utils/web3Connect';
+import Layout from '../common/home/Layout';
 
 class Home extends Component {
     handleConnect = async () => {
         const { web3Connect } = this.props.contractReducer;
         try {
             const w3c = await w3connect(web3Connect);
-            const [account] = await w3c.web3.eth.getAccounts();
-            const user = createWeb3User(account);
-            this.props.updateDataUser({ address: user.username });
+            const chainId = await w3c.web3.eth.net.getId();
+
+            if (chainId !== configs.chainId) {
+                alert(
+                    `Please switch Web3 to the correct network and try signing in again. Detected network: ${configs.network
+                    }, Required network: ${configs.network}`,
+                );
+            } else {
+                const [account] = await w3c.web3.eth.getAccounts();
+                const user = createWeb3User(account);
+                this.props.updateDataUser({ address: user.username });
+            }
         } catch (err) {
             console.log('web3Connect error', err);
         }

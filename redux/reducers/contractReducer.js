@@ -2,7 +2,8 @@ import { CREATE_CONTRACT_SUCCESS, UPDATE_DATE_CONTRACT } from '../constants/appC
 const initialState = {
     listContract: {},
     chainId: '',
-    web3Connect: null
+    web3Connect: null,
+    provider: null
 };
 
 export default function contractReducer(state = initialState, action) {
